@@ -1,0 +1,67 @@
+CREATE DATABASE BT2;
+USE BT2;
+
+CREATE TABLE tuasach(
+	id int auto_increment,
+	tuasach varchar(50)not null,
+	tacgia varchar(50) not null,
+	tomtat text,
+	
+	primary key(id)
+);
+
+CREATE TABLE dausach(
+	id int auto_increment,
+	ngonngu varchar(20),
+	bia varchar(50),
+	trangthai varchar(20),
+	
+	primary key(id),
+	ma_tuasach int
+);
+
+CREATE TABLE cuonsach(
+	id int auto_increment,
+	tinhtrang varchar(20),
+	
+	primary key(id),
+	ma_dausach int
+);
+
+ALTER TABLE dausach ADD CONSTRAINT FK_ma_tuasach_dausach FOREIGN KEY(ma_tuasach) REFERENCES tuasach(id);
+ALTER TABLE cuonsach ADD CONSTRAINT FK_ma_dausach_cuonsach FOREIGN KEY(ma_dausach) REFERENCES dausach(id);
+
+-- 1. Viết procedure lấy toàn bộ tựa sách.
+CREATE PROCEDURE sp_Alltuasach()
+BEGIN
+	SELECT *
+	FROM tuasach;
+END;
+
+CALL sp_Alltuasach();
+
+-- 2. Viết procedure lấy toàn bộ đầu sách với tựa sách tương ứng.
+CREATE PROCEDURE sp_Alldausach()
+BEGIN
+	SELECT * 
+	FROM dausach d
+	JOIN tuasach t
+	ON d.ma_tuasach =t.id;
+END;
+
+CALL sp_Alldausach();
+
+-- 3.Viết procedure liệt kê những thông tin đầu sách, thông tin tựa sách và 
+-- số lượng sách chưa được mượn của một đầu sách cự thể.
+CREATE PROCEDURE sp_Laythongtindausach(IN dausach_id int)
+BEGIN
+	SELECT t.id AS 'Mã tựa sách',t.tacgia AS 'Tác giả', t.tomtat AS 'Tóm tắt', d.id AS 'Mã đầu sách',
+	d.ngonngu AS 'Ngôn ngữ', d.bia AS 'Bìa', d.trangthai as 'Trạng thái' , count(d.id) AS 'Số lượng sách chưa mượn'
+	FROM tuasach t
+	JOIN dausach d ON d.ma_tuasach =t.id
+	INNER JOIN cuonsach c ON c.ma_dausach = d.id
+	WHERE d.id = dausach_id AND c.tinhtrang = 'chưa mượn'
+	GROUP BY d.id  ;
+END;
+
+CALL sp_Laythongtindausach(2);
